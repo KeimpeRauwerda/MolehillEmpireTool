@@ -1,3 +1,5 @@
+import { GARDEN_WIDTH } from './config.js';
+
 // Vector type for tile coordinates
 export class Vector {
   constructor(x, y) {
@@ -29,10 +31,6 @@ export class Vector {
     return [this.x, this.y];
   }
 }
-
-// Constants for garden dimensions
-export const GARDEN_WIDTH = 17;
-export const GARDEN_HEIGHT = 12;
 
 // Convert X,Y coordinates to tile number
 export function coordsToTile(vector) {

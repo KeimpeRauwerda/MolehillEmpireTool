@@ -4,7 +4,7 @@
   "description": "Garden automation for Molehill Empire",
   "scripts": {
     "build": "node build.js",
-    "build:copy": "node build.js && type dist.js | clip && echo Script copied to clipboard!"
+    "build:copy": "node build.js && powershell -command \"Get-Content dist/molehill-automation.js | Set-Clipboard\" && echo Script copied to clipboard!"
   },
   "type": "commonjs"
 }

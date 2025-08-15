@@ -1,13 +1,22 @@
 const fs = require('fs');
+const path = require('path');
 
 // Files in dependency order
 const files = [
+  'config.js',
   'util.js',
+  'actions.js',
   'automation.js', 
   'main.js'
 ];
 
 function buildScript() {
+  // Create dist directory if it doesn't exist
+  const distDir = path.join(__dirname, 'dist');
+  if (!fs.existsSync(distDir)) {
+    fs.mkdirSync(distDir);
+  }
+
   let combined = '';
   
   // Add header comment
@@ -32,9 +41,10 @@ function buildScript() {
     combined += content + '\n\n';
   });
   
-  // Write to dist.js
-  fs.writeFileSync('dist.js', combined);
-  console.log('Built successfully to dist.js');
+  // Write to dist/molehill-automation.js
+  const outputPath = path.join(distDir, 'molehill-automation.js');
+  fs.writeFileSync(outputPath, combined);
+  console.log(`Built successfully to ${outputPath}`);
 }
 
 buildScript();
