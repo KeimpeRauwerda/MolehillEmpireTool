@@ -1,0 +1,10 @@
+{
+  "name": "molehill-empire-automation",
+  "version": "1.0.0",
+  "description": "Garden automation for Molehill Empire",
+  "scripts": {
+    "build": "node build.js",
+    "build:copy": "node build.js && type dist.js | clip && echo Script copied to clipboard!"
+  },
+  "type": "commonjs"
+}
