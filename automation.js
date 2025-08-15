@@ -1,7 +1,7 @@
 import { Vector } from './util.js';
 import { SEED_TYPES } from './config.js';
 
-// Main automation sequence
+// Development automation sequence
 export async function runAutomation() {
   // Area to plant and water
   console.log('Starting automation...'); 
