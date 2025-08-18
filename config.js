@@ -2,6 +2,9 @@
 export const GARDEN_WIDTH = 17;
 export const GARDEN_HEIGHT = 12;
 
+// Configuration for auto-harvest feature
+export const AUTO_HARVEST_CHECK_INTERVAL = 30000; // Check every 30 seconds
+
 // Tool types
 export const TOOLS = {
   WATERING_CAN: 'giessen'

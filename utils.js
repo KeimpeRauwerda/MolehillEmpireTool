@@ -75,3 +75,53 @@ export function getCropColor(seedType) {
 export function getCropName(seedType) {
   return getCropColor(seedType).name;
 }
+
+// Check if a tile has a fully grown crop (growth stage 4)
+export function isFullyGrown(tileElement) {
+  const plantImage = tileElement.querySelector('.plantImage');
+  if (!plantImage) return false;
+  
+  const backgroundStyle = plantImage.style.background;
+  if (!backgroundStyle) return false;
+  
+  // Extract the image filename from the background URL
+  const urlMatch = backgroundStyle.match(/url\([^)]*\/([^/)]+)\)/);
+  if (!urlMatch) return false;
+  
+  const filename = urlMatch[1];
+  
+  // Check if the filename indicates growth stage 4 (ends with _04.gif)
+  return filename.includes('_04.gif');
+}
+
+// Find all fully grown crops within saved selections
+export function findFullyGrownCropsInSelections(savedSelections) {
+  const fullyGrownCrops = [];
+  
+  for (const selection of savedSelections) {
+    for (let y = selection.point1.y; y <= selection.point2.y; y++) {
+      for (let x = selection.point1.x; x <= selection.point2.x; x++) {
+        const tileElement = getTileElement(new Vector(x, y));
+        if (tileElement && isFullyGrown(tileElement)) {
+          fullyGrownCrops.push({
+            position: new Vector(x, y),
+            selection: selection
+          });
+        }
+      }
+    }
+  }
+  
+  return fullyGrownCrops;
+}
+
+// Check if a tile is empty (no plant)
+export function isTileEmpty(tileElement) {
+  const plantImage = tileElement.querySelector('.plantImage');
+  if (!plantImage || !plantImage.style.background) return true;
+  
+  const backgroundStyle = plantImage.style.background;
+  
+  // Check if the background contains the empty tile image (0.gif)
+  return backgroundStyle.includes('/0.gif') || backgroundStyle.includes('produkte/0.gif');
+}

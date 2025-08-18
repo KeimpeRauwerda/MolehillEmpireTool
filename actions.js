@@ -1,4 +1,4 @@
-import { getTileElement } from './util.js';
+import { getTileElement, isFullyGrown } from './utils.js';
 import { SEED_TYPES } from './config.js';
 
 // Plant seeds in a range of tiles
@@ -56,11 +56,25 @@ export async function harvestRange(startVector, endVector) {
   document.querySelector('#ernten').click();
   await new Promise(resolve => requestAnimationFrame(resolve));
 
+  let harvestedCount = 0;
+  let skippedCount = 0;
+
   // Harvest each tile in the range
   for (let y = startVector.y; y <= endVector.y; y++) {
     for (let x = startVector.x; x <= endVector.x; x++) {
-      getTileElement({ x, y }).click();
-      await new Promise(resolve => requestAnimationFrame(resolve));
+      const tileElement = getTileElement({ x, y });
+      
+      // Only harvest if the crop is fully grown (stage 4)
+      if (isFullyGrown(tileElement)) {
+        tileElement.click();
+        harvestedCount++;
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      } else {
+        skippedCount++;
+        console.log(`Skipping tile (${x}, ${y}) - not fully grown`);
+      }
     }
   }
+  
+  console.log(`Harvest complete: ${harvestedCount} tiles harvested, ${skippedCount} tiles skipped`);
 }

@@ -1,4 +1,4 @@
-import { Vector, getTileElement, getCropColor, getCropName } from './util.js';
+import { Vector, getTileElement, getCropColor, getCropName } from './utils.js';
 import { plantAndWaterRange, harvestRange } from './actions.js';
 import { SEED_TYPES } from './config.js';
 
@@ -54,6 +54,9 @@ export function initPlantSelection() {
   if (plantAllButton) {
     plantAllButton.addEventListener('click', plantAllSelections);
   }
+  
+  // Setup auto harvest toggle
+  setupAutoHarvestToggle();
 }
 
 // Dynamically create seed buttons from SEED_TYPES config
@@ -192,6 +195,7 @@ function renderSavedSelections() {
         From ${selection.point1.toString()} to ${selection.point2.toString()}
       </div>
       <div class="selection-actions">
+        <button class="selection-plant" data-index="${index}">Plant</button>
         <button class="selection-harvest" data-index="${index}">Harvest</button>
         <button class="selection-delete" data-index="${index}">Delete</button>
       </div>
@@ -213,6 +217,17 @@ function renderSavedSelections() {
     });
     
     container.appendChild(item);
+    
+    // Add plant button listener
+    const plantBtn = item.querySelector('.selection-plant');
+    plantBtn.addEventListener('click', async () => {
+      const statusText = document.getElementById('selection-status');
+      if (statusText) statusText.textContent = `Planting ${getCropName(selection.seedType)} area...`;
+      
+      await plantAndWaterRange(selection.point1, selection.point2, selection.seedType);
+      
+      if (statusText) statusText.textContent = 'Planting complete!';
+    });
     
     // Add harvest button listener
     const harvestBtn = item.querySelector('.selection-harvest');
@@ -294,7 +309,7 @@ export async function plantAllSelections() {
     if (statusText) statusText.textContent = `Planting selection ${i+1} of ${savedSelections.length}...`;
     
     // Plant and water this selection
-    await plantAndWaterRange(selection.point1, selection.point2, selection.seedType);
+    plantAndWaterRange(selection.point1, selection.point2, selection.seedType);
     
     // Small delay between selections to prevent game issues
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -458,4 +473,164 @@ function normalizePoints(point1, point2) {
 // Update highlight
 function updateHighlight() {
   updatePreviewHighlight();
+}
+
+// Auto harvest state
+let autoHarvestEnabled = false;
+let autoHarvestInterval = null;
+
+// Setup automatic harvesting toggle
+function setupAutoHarvestToggle() {
+  const autoHarvestCheckbox = document.getElementById('auto-harvest-enabled');
+  const autoHarvestStatus = document.getElementById('auto-harvest-status');
+  
+  if (!autoHarvestCheckbox || !autoHarvestStatus) return;
+  
+  // Load saved state
+  const savedState = localStorage.getItem('molehillAutoHarvestEnabled');
+  if (savedState === 'true') {
+    autoHarvestCheckbox.checked = true;
+    startAutoHarvest();
+  }
+  
+  autoHarvestCheckbox.addEventListener('change', (e) => {
+    autoHarvestEnabled = e.target.checked;
+    localStorage.setItem('molehillAutoHarvestEnabled', autoHarvestEnabled.toString());
+    
+    if (autoHarvestEnabled) {
+      startAutoHarvest();
+    } else {
+      stopAutoHarvest();
+    }
+  });
+}
+
+// Start automatic harvesting
+function startAutoHarvest() {
+  if (autoHarvestInterval) return; // Already running
+  
+  autoHarvestEnabled = true;
+  const autoHarvestStatus = document.getElementById('auto-harvest-status');
+  
+  if (autoHarvestStatus) {
+    autoHarvestStatus.textContent = 'Auto harvest active - checking every 30s';
+  }
+  
+  // Run initial check
+  checkAndHarvestCrops();
+  
+  // Set up periodic checks
+  autoHarvestInterval = setInterval(checkAndHarvestCrops, AUTO_HARVEST_CHECK_INTERVAL);
+}
+
+// Stop automatic harvesting
+function stopAutoHarvest() {
+  autoHarvestEnabled = false;
+  
+  if (autoHarvestInterval) {
+    clearInterval(autoHarvestInterval);
+    autoHarvestInterval = null;
+  }
+  
+  const autoHarvestStatus = document.getElementById('auto-harvest-status');
+  if (autoHarvestStatus) {
+    autoHarvestStatus.textContent = 'Auto harvest disabled';
+  }
+}
+
+// Check for fully grown crops and harvest/replant them
+async function checkAndHarvestCrops() {
+  if (!autoHarvestEnabled || savedSelections.length === 0) return;
+  
+  const autoHarvestStatus = document.getElementById('auto-harvest-status');
+  
+  try {
+    // Find all fully grown crops in saved selections
+    const fullyGrownCrops = findFullyGrownCropsInSelections(savedSelections);
+    
+    if (fullyGrownCrops.length === 0) {
+      if (autoHarvestStatus) {
+        autoHarvestStatus.textContent = `Auto harvest active - no crops ready (checked ${new Date().toLocaleTimeString()})`;
+      }
+      return;
+    }
+    
+    if (autoHarvestStatus) {
+      autoHarvestStatus.textContent = `Harvesting ${fullyGrownCrops.length} crops...`;
+    }
+    
+    // Group crops by selection for efficient harvesting
+    const selectionGroups = new Map();
+    
+    for (const crop of fullyGrownCrops) {
+      const selectionKey = `${crop.selection.point1.x},${crop.selection.point1.y}-${crop.selection.point2.x},${crop.selection.point2.y}-${crop.selection.seedType}`;
+      
+      if (!selectionGroups.has(selectionKey)) {
+        selectionGroups.set(selectionKey, {
+          selection: crop.selection,
+          positions: []
+        });
+      }
+      
+      selectionGroups.get(selectionKey).positions.push(crop.position);
+    }
+    
+    // Process each selection group
+    for (const group of selectionGroups.values()) {
+      // Harvest individual tiles (since we only want fully grown ones)
+      for (const position of group.positions) {
+        // Select harvesting tool
+        document.querySelector('#ernten').click();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Harvest the tile
+        const tileElement = getTileElement(position);
+        if (tileElement) {
+          tileElement.click();
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      // Wait a bit after harvesting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Replant the harvested tiles
+      for (const position of group.positions) {
+        const tileElement = getTileElement(position);
+        if (tileElement && isTileEmpty(tileElement)) {
+          // Select seed type
+          document.querySelector(`#regal_${group.selection.seedType}`).click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Plant the seed
+          tileElement.click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Wait a bit, then water
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Select watering can
+          document.querySelector('#giessen').click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Water the tile
+          tileElement.click();
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      // Small delay between selection groups
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    if (autoHarvestStatus) {
+      autoHarvestStatus.textContent = `Auto harvest complete - ${fullyGrownCrops.length} crops replanted (${new Date().toLocaleTimeString()})`;
+    }
+    
+  } catch (error) {
+    console.error('Auto harvest error:', error);
+    if (autoHarvestStatus) {
+      autoHarvestStatus.textContent = `Auto harvest error - ${error.message}`;
+    }
+  }
 }
