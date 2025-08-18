@@ -196,13 +196,19 @@ function renderSavedSelections() {
       </div>
     `;
     
-    // Add hover event listeners for visualization
+    // Add hover event listeners for visualization - only when not actively selecting
     item.addEventListener('mouseenter', () => {
-      showSelectionHighlight(selection);
+      // Don't show preview if we're in the middle of making a selection
+      if (!selectionMode || (!firstPoint && !secondPoint)) {
+        showSelectionHighlight(selection);
+      }
     });
     
     item.addEventListener('mouseleave', () => {
-      hideSelectionHighlight();
+      // Don't hide if we're in active selection mode with points selected
+      if (!selectionMode || (!firstPoint && !secondPoint)) {
+        hideSelectionHighlight();
+      }
     });
     
     container.appendChild(item);
@@ -256,14 +262,13 @@ function showSelectionHighlight(selection) {
 function hideSelectionHighlight() {
   if (!highlightElement) return;
   
-  // Only hide if we're not in active selection mode
+  // Only hide if we're not in active selection mode with points
   if (!selectionMode || (!firstPoint && !secondPoint)) {
     highlightElement.style.display = 'none';
+    // Reset to default selection colors
+    highlightElement.style.backgroundColor = 'rgba(46, 204, 113, 0.3)';
+    highlightElement.style.borderColor = '#27ae60';
   }
-  
-  // Reset to default selection colors
-  highlightElement.style.backgroundColor = 'rgba(46, 204, 113, 0.3)';
-  highlightElement.style.borderColor = '#27ae60';
 }
 
 // Plant and water all saved selections

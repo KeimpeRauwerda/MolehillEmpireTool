@@ -13,6 +13,7 @@ export async function plantRange(startVector, endVector, seedType = SEED_TYPES[0
   for (let y = startVector.y; y <= endVector.y; y++) {
     for (let x = startVector.x; x <= endVector.x; x++) {
       getTileElement({ x, y }).click();
+      await new Promise(resolve => requestAnimationFrame(resolve));
     }
   }
 }
@@ -29,6 +30,7 @@ export async function waterRange(startVector, endVector) {
   for (let y = startVector.y; y <= endVector.y; y++) {
     for (let x = startVector.x; x <= endVector.x; x++) {
       getTileElement({ x, y }).click();
+      await new Promise(resolve => requestAnimationFrame(resolve));
     }
   }
 }
