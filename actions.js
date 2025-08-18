@@ -47,3 +47,20 @@ export async function plantAndWaterRange(startVector, endVector, seedType = SEED
   // Water the same area
   await waterRange(startVector, endVector);
 }
+
+// Harvest a range of tiles
+export async function harvestRange(startVector, endVector) {
+  console.log(`Harvesting from ${startVector.toString()} to ${endVector.toString()}`);
+
+  // Select harvesting tool
+  document.querySelector('#ernten').click();
+  await new Promise(resolve => requestAnimationFrame(resolve));
+
+  // Harvest each tile in the range
+  for (let y = startVector.y; y <= endVector.y; y++) {
+    for (let x = startVector.x; x <= endVector.x; x++) {
+      getTileElement({ x, y }).click();
+      await new Promise(resolve => requestAnimationFrame(resolve));
+    }
+  }
+}

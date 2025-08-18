@@ -1,5 +1,5 @@
 import { Vector, getTileElement, getCropColor, getCropName } from './util.js';
-import { plantAndWaterRange } from './actions.js';
+import { plantAndWaterRange, harvestRange } from './actions.js';
 import { SEED_TYPES } from './config.js';
 
 // Selection state
@@ -192,6 +192,7 @@ function renderSavedSelections() {
         From ${selection.point1.toString()} to ${selection.point2.toString()}
       </div>
       <div class="selection-actions">
+        <button class="selection-harvest" data-index="${index}">Harvest</button>
         <button class="selection-delete" data-index="${index}">Delete</button>
       </div>
     `;
@@ -212,6 +213,17 @@ function renderSavedSelections() {
     });
     
     container.appendChild(item);
+    
+    // Add harvest button listener
+    const harvestBtn = item.querySelector('.selection-harvest');
+    harvestBtn.addEventListener('click', async () => {
+      const statusText = document.getElementById('selection-status');
+      if (statusText) statusText.textContent = `Harvesting ${getCropName(selection.seedType)} area...`;
+      
+      await harvestRange(selection.point1, selection.point2);
+      
+      if (statusText) statusText.textContent = 'Harvest complete!';
+    });
     
     // Add delete button listener
     const deleteBtn = item.querySelector('.selection-delete');
