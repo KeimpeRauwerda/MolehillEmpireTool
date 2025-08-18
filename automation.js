@@ -1,5 +1,6 @@
 import { Vector } from './util.js';
 import { SEED_TYPES } from './config.js';
+import { plantAndWaterRange } from './actions.js';
 
 // Development automation sequence
 export async function runAutomation() {
@@ -14,12 +15,12 @@ export async function runAutomation() {
   // Plant and water a specific area
   selection.point1 = new Vector(2, 3);
   selection.point2 = new Vector(7, 6);
-  await plantAndWaterRange(selection.point1, selection.point2, SEED_TYPES.LETTUCE);
+  await plantAndWaterRange(selection.point1, selection.point2, SEED_TYPES.RADISH);
 
   // Plant and water another area
   selection.point1 = new Vector(2, 7);
   selection.point2 = new Vector(7, 12);
-  await plantAndWaterRange(selection.point1, selection.point2, SEED_TYPES.CARROT);
+  await plantAndWaterRange(selection.point1, selection.point2, SEED_TYPES.CUCUMBER);
 
   console.log('Automation complete!');
 }

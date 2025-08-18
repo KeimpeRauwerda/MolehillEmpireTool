@@ -1,12 +1,12 @@
 <div id="molehill-automation-menu">
-  <div class="menu-content">
-    <h3 class="menu-title">Molehill Automation</h3>
-    <p class="menu-description">molehill automation by Keimpe</p>
+  <div class="ma-menu-content">
+    <h3 class="ma-menu-title">Molehill Automation</h3>
+    <p class="ma-menu-description">molehill automation by Keimpe</p>
     
-    <div class="menu-controls">
-      <button id="select-plant-area" class="menu-button">Select Plant Area</button>
-      <div id="selection-status" class="status-text"></div>
-      
+    <button id="select-plant-area" class="ma-menu-button select-button">Select Plant Area</button>
+    <div id="selection-status" class="status-text"></div>
+    
+    <div class="ma-menu-controls">
       <div id="seed-selection" class="seed-selection" style="display:none;">
         <p>Select crop type:</p>
         <div class="seed-buttons">
@@ -16,6 +16,14 @@
           <button class="seed-button" data-seed-type="14">Radish</button>
         </div>
       </div>
+      
+      <div class="saved-selections" id="saved-selections">
+        <p>No saved selections</p>
+      </div>
+      
+      <button id="plant-all-selections" class="ma-menu-button plant-all-button" style="display:none;">
+        Plant All Selections
+      </button>
     </div>
   </div>
 </div>

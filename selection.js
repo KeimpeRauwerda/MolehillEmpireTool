@@ -1,5 +1,6 @@
 import { Vector, getTileElement } from './util.js';
 import { plantAndWaterRange } from './actions.js';
+import { SEED_TYPES } from './config.js';
 
 // Selection state
 let selectionMode = false;
@@ -7,6 +8,7 @@ let firstPoint = null;
 let secondPoint = null;
 let highlightElement = null;
 let mouseHoverPoint = null;
+let savedSelections = [];
 
 // Initialize the selection system
 export function initPlantSelection() {
@@ -19,6 +21,10 @@ export function initPlantSelection() {
   highlightElement.className = 'tile-highlight';
   highlightElement.style.display = 'none';
   document.body.appendChild(highlightElement);
+  
+  // Load saved selections from localStorage
+  loadSavedSelections();
+  renderSavedSelections();
   
   // Toggle selection mode
   selectButton.addEventListener('click', () => {
@@ -43,15 +49,216 @@ export function initPlantSelection() {
     button.addEventListener('click', () => {
       const seedType = parseInt(button.getAttribute('data-seed-type'));
       if (firstPoint && secondPoint) {
-        plantAndWaterRange(firstPoint, secondPoint, seedType);
+        // Check for overlaps with existing selections
+        const newSelection = {
+          point1: firstPoint,
+          point2: secondPoint,
+          seedType
+        };
+        
+        if (checkForOverlap(newSelection)) {
+          statusText.textContent = 'Error: Selection overlaps with existing selection!';
+          return;
+        }
+        
+        // Add to saved selections instead of planting immediately
+        savedSelections.push(newSelection);
+        saveSavedSelections();
+        renderSavedSelections();
+        
+        // Reset selection
         resetSelection();
         selectionMode = false;
         selectButton.classList.remove('active');
-        statusText.textContent = 'Planting complete!';
+        statusText.textContent = 'Selection saved!';
         seedSelection.style.display = 'none';
       }
     });
   });
+  
+  // Setup plant all button
+  const plantAllButton = document.getElementById('plant-all-selections');
+  if (plantAllButton) {
+    plantAllButton.addEventListener('click', plantAllSelections);
+  }
+}
+
+// Check if a new selection overlaps with any existing selection
+function checkForOverlap(newSelection) {
+  for (const selection of savedSelections) {
+    // Check if rectangles overlap
+    const overlap = !(
+      selection.point2.x < newSelection.point1.x || 
+      selection.point1.x > newSelection.point2.x ||
+      selection.point2.y < newSelection.point1.y ||
+      selection.point1.y > newSelection.point2.y
+    );
+    
+    if (overlap) return true;
+  }
+  return false;
+}
+
+// Save selections to localStorage
+function saveSavedSelections() {
+  const serialized = JSON.stringify(savedSelections.map(selection => ({
+    point1: { x: selection.point1.x, y: selection.point1.y },
+    point2: { x: selection.point2.x, y: selection.point2.y },
+    seedType: selection.seedType
+  })));
+  
+  localStorage.setItem('molehillSavedSelections', serialized);
+}
+
+// Load selections from localStorage
+function loadSavedSelections() {
+  const saved = localStorage.getItem('molehillSavedSelections');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      savedSelections = parsed.map(selection => ({
+        point1: new Vector(selection.point1.x, selection.point1.y),
+        point2: new Vector(selection.point2.x, selection.point2.y),
+        seedType: selection.seedType
+      }));
+    } catch (e) {
+      console.error('Error loading saved selections:', e);
+      savedSelections = [];
+    }
+  }
+}
+
+// Render the saved selections in the UI
+function renderSavedSelections() {
+  const container = document.getElementById('saved-selections');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (savedSelections.length === 0) {
+    container.innerHTML = '<p>No saved selections</p>';
+    return;
+  }
+  
+  // Get crop name helper function
+  const getCropName = (seedType) => {
+    const cropMap = {
+      [SEED_TYPES.LETTUCE]: 'Lettuce',
+      [SEED_TYPES.CARROT]: 'Carrot',
+      [SEED_TYPES.CUCUMBER]: 'Cucumber',
+      [SEED_TYPES.RADISH]: 'Radish',
+      [SEED_TYPES.STRAWBERRY]: 'Strawberry',
+      [SEED_TYPES.TOMATO]: 'Tomato'
+    };
+    return cropMap[seedType] || 'Unknown';
+  };
+  
+  savedSelections.forEach((selection, index) => {
+    const item = document.createElement('div');
+    item.className = `selection-item crop-${selection.seedType}`;
+    item.setAttribute('data-selection-index', index);
+    
+    const size = {
+      width: selection.point2.x - selection.point1.x + 1,
+      height: selection.point2.y - selection.point1.y + 1
+    };
+    
+    item.innerHTML = `
+      <div class="selection-info">
+        ${getCropName(selection.seedType)} (${size.width}x${size.height})
+        <br>
+        From ${selection.point1.toString()} to ${selection.point2.toString()}
+      </div>
+      <div class="selection-actions">
+        <button class="selection-delete" data-index="${index}">Delete</button>
+      </div>
+    `;
+    
+    // Add hover event listeners for visualization
+    item.addEventListener('mouseenter', () => {
+      showSelectionHighlight(selection);
+    });
+    
+    item.addEventListener('mouseleave', () => {
+      hideSelectionHighlight();
+    });
+    
+    container.appendChild(item);
+    
+    // Add delete button listener
+    const deleteBtn = item.querySelector('.selection-delete');
+    deleteBtn.addEventListener('click', () => {
+      savedSelections.splice(index, 1);
+      saveSavedSelections();
+      renderSavedSelections();
+    });
+  });
+  
+  // Show or hide plant all button
+  const plantAllBtn = document.getElementById('plant-all-selections');
+  if (plantAllBtn) {
+    plantAllBtn.style.display = savedSelections.length > 0 ? 'block' : 'none';
+  }
+}
+
+// Show highlight for a specific selection
+function showSelectionHighlight(selection) {
+  if (!highlightElement) return;
+  
+  const firstTileElement = getTileElement(selection.point1);
+  const secondTileElement = getTileElement(selection.point2);
+  
+  if (!firstTileElement || !secondTileElement) return;
+  
+  const firstRect = firstTileElement.getBoundingClientRect();
+  const secondRect = secondTileElement.getBoundingClientRect();
+  
+  const left = Math.min(firstRect.left, secondRect.left);
+  const top = Math.min(firstRect.top, secondRect.top);
+  const right = Math.max(firstRect.right, secondRect.right);
+  const bottom = Math.max(firstRect.bottom, secondRect.bottom);
+  
+  highlightElement.style.left = `${left}px`;
+  highlightElement.style.top = `${top}px`;
+  highlightElement.style.width = `${right - left}px`;
+  highlightElement.style.height = `${bottom - top}px`;
+  highlightElement.style.display = 'block';
+  highlightElement.style.backgroundColor = 'rgba(52, 152, 219, 0.3)';
+  highlightElement.style.borderColor = '#3498db';
+}
+
+// Hide selection highlight
+function hideSelectionHighlight() {
+  if (!highlightElement) return;
+  
+  // Only hide if we're not in active selection mode
+  if (!selectionMode || (!firstPoint && !secondPoint)) {
+    highlightElement.style.display = 'none';
+  }
+  
+  // Reset to default selection colors
+  highlightElement.style.backgroundColor = 'rgba(46, 204, 113, 0.3)';
+  highlightElement.style.borderColor = '#27ae60';
+}
+
+// Plant and water all saved selections
+export async function plantAllSelections() {
+  const statusText = document.getElementById('selection-status');
+  if (statusText) statusText.textContent = 'Planting all selections...';
+  
+  // Process each selection sequentially
+  for (let i = 0; i < savedSelections.length; i++) {
+    const selection = savedSelections[i];
+    if (statusText) statusText.textContent = `Planting selection ${i+1} of ${savedSelections.length}...`;
+    
+    // Plant and water this selection
+    await plantAndWaterRange(selection.point1, selection.point2, selection.seedType);
+    
+    // Small delay between selections to prevent game issues
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  if (statusText) statusText.textContent = 'All plantings complete!';
 }
 
 // Add click listeners to all garden tiles
@@ -204,4 +411,9 @@ function normalizePoints(point1, point2) {
       Math.max(point1.y, point2.y)
     )
   };
+}
+
+// Update highlight
+function updateHighlight() {
+  updatePreviewHighlight();
 }
