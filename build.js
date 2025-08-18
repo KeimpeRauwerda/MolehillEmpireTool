@@ -6,6 +6,7 @@ const files = [
   'config.js',
   'util.js',
   'actions.js',
+  'selection.js',
   'automation.js', 
   'menu.js',
   'main.js'

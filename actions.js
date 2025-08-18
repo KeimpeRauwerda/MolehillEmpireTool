@@ -1,4 +1,4 @@
-import { getTileElement } from './utils.js';
+import { getTileElement } from './util.js';
 import { SEED_TYPES } from './config.js';
 
 // Plant seeds in a range of tiles

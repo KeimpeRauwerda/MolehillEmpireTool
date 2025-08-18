@@ -10,6 +10,8 @@ export const TOOLS = {
 // Seed/crop types
 export const SEED_TYPES = {
   LETTUCE: 2,
+  STRAWBERRY: 3,
+  TOMATO: 5,
   CARROT: 6,
   CUCUMBER: 12,
   RADISH: 14
