@@ -125,3 +125,24 @@ export function isTileEmpty(tileElement) {
   // Check if the background contains the empty tile image (0.gif)
   return backgroundStyle.includes('/0.gif') || backgroundStyle.includes('produkte/0.gif');
 }
+
+// Find all empty tiles within saved selections
+export function findEmptyTilesInSelections(savedSelections) {
+  const emptyTiles = [];
+  
+  for (const selection of savedSelections) {
+    for (let y = selection.point1.y; y <= selection.point2.y; y++) {
+      for (let x = selection.point1.x; x <= selection.point2.x; x++) {
+        const tileElement = getTileElement(new Vector(x, y));
+        if (tileElement && isTileEmpty(tileElement)) {
+          emptyTiles.push({
+            position: new Vector(x, y),
+            selection: selection
+          });
+        }
+      }
+    }
+  }
+  
+  return emptyTiles;
+}

@@ -142,6 +142,7 @@
   border: 2px solid #27ae60;
   pointer-events: none;
   z-index: 9000;
+  transition: all 0.2s ease;
 }
 
 .seed-selection {
