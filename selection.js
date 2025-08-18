@@ -1,4 +1,4 @@
-import { Vector, getTileElement } from './util.js';
+import { Vector, getTileElement, getCropColor, getCropName } from './util.js';
 import { plantAndWaterRange } from './actions.js';
 import { SEED_TYPES } from './config.js';
 
@@ -22,6 +22,9 @@ export function initPlantSelection() {
   highlightElement.style.display = 'none';
   document.body.appendChild(highlightElement);
   
+  // Dynamically populate seed buttons from config
+  populateSeedButtons();
+  
   // Load saved selections from localStorage
   loadSavedSelections();
   renderSavedSelections();
@@ -43,7 +46,36 @@ export function initPlantSelection() {
     }
   });
   
-  // Set up seed selection buttons
+  // Set up seed selection buttons (now dynamically created)
+  setupSeedButtonListeners();
+  
+  // Setup plant all button
+  const plantAllButton = document.getElementById('plant-all-selections');
+  if (plantAllButton) {
+    plantAllButton.addEventListener('click', plantAllSelections);
+  }
+}
+
+// Dynamically create seed buttons from SEED_TYPES config
+function populateSeedButtons() {
+  const seedButtonsContainer = document.querySelector('.seed-buttons');
+  if (!seedButtonsContainer) return;
+  
+  // Clear existing buttons
+  seedButtonsContainer.innerHTML = '';
+  
+  // Create buttons for each seed type in config
+  Object.entries(SEED_TYPES).forEach(([name, seedType]) => {
+    const button = document.createElement('button');
+    button.className = 'seed-button';
+    button.setAttribute('data-seed-type', seedType);
+    button.textContent = getCropName(seedType);
+    seedButtonsContainer.appendChild(button);
+  });
+}
+
+// Set up event listeners for dynamically created seed buttons
+function setupSeedButtonListeners() {
   const seedButtons = document.querySelectorAll('.seed-button');
   seedButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -57,6 +89,7 @@ export function initPlantSelection() {
         };
         
         if (checkForOverlap(newSelection)) {
+          const statusText = document.getElementById('selection-status');
           statusText.textContent = 'Error: Selection overlaps with existing selection!';
           return;
         }
@@ -69,18 +102,15 @@ export function initPlantSelection() {
         // Reset selection
         resetSelection();
         selectionMode = false;
+        const selectButton = document.getElementById('select-plant-area');
         selectButton.classList.remove('active');
+        const statusText = document.getElementById('selection-status');
         statusText.textContent = 'Selection saved!';
+        const seedSelection = document.getElementById('seed-selection');
         seedSelection.style.display = 'none';
       }
     });
   });
-  
-  // Setup plant all button
-  const plantAllButton = document.getElementById('plant-all-selections');
-  if (plantAllButton) {
-    plantAllButton.addEventListener('click', plantAllSelections);
-  }
 }
 
 // Check if a new selection overlaps with any existing selection
@@ -140,23 +170,15 @@ function renderSavedSelections() {
     return;
   }
   
-  // Get crop name helper function
-  const getCropName = (seedType) => {
-    const cropMap = {
-      [SEED_TYPES.LETTUCE]: 'Lettuce',
-      [SEED_TYPES.CARROT]: 'Carrot',
-      [SEED_TYPES.CUCUMBER]: 'Cucumber',
-      [SEED_TYPES.RADISH]: 'Radish',
-      [SEED_TYPES.STRAWBERRY]: 'Strawberry',
-      [SEED_TYPES.TOMATO]: 'Tomato'
-    };
-    return cropMap[seedType] || 'Unknown';
-  };
-  
   savedSelections.forEach((selection, index) => {
     const item = document.createElement('div');
-    item.className = `selection-item crop-${selection.seedType}`;
+    item.className = `selection-item`;
     item.setAttribute('data-selection-index', index);
+    
+    // Get crop color and set CSS custom properties
+    const cropColor = getCropColor(selection.seedType);
+    item.style.setProperty('--crop-border-color', cropColor.border);
+    item.style.borderLeftColor = cropColor.border;
     
     const size = {
       width: selection.point2.x - selection.point1.x + 1,
@@ -218,13 +240,16 @@ function showSelectionHighlight(selection) {
   const right = Math.max(firstRect.right, secondRect.right);
   const bottom = Math.max(firstRect.bottom, secondRect.bottom);
   
+  // Get crop-specific color from config
+  const colors = getCropColor(selection.seedType);
+  
   highlightElement.style.left = `${left}px`;
   highlightElement.style.top = `${top}px`;
   highlightElement.style.width = `${right - left}px`;
   highlightElement.style.height = `${bottom - top}px`;
   highlightElement.style.display = 'block';
-  highlightElement.style.backgroundColor = 'rgba(52, 152, 219, 0.3)';
-  highlightElement.style.borderColor = '#3498db';
+  highlightElement.style.backgroundColor = colors.bg;
+  highlightElement.style.borderColor = colors.border;
 }
 
 // Hide selection highlight

@@ -1,4 +1,5 @@
 import { GARDEN_WIDTH } from './config.js';
+import { CROP_COLORS } from './config.js';
 
 // Vector type for tile coordinates
 export class Vector {
@@ -40,4 +41,37 @@ export function coordsToTile(vector) {
 export function getTileElement(vector) {
   const tileNum = coordsToTile(vector);
   return document.querySelector(`#gardenTile${tileNum}`);
+}
+
+// Cache for generated random colors
+const randomColorCache = new Map();
+
+// Generate a random color for unknown crop types
+export function getRandomCropColor(seedType) {
+  if (randomColorCache.has(seedType)) {
+    return randomColorCache.get(seedType);
+  }
+  
+  // Generate random HSL color with good contrast
+  const hue = Math.floor(Math.random() * 360);
+  const saturation = 60 + Math.floor(Math.random() * 30); // 60-90%
+  const lightness = 45 + Math.floor(Math.random() * 20); // 45-65%
+  
+  const border = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  const bg = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.3)`;
+  
+  const color = { bg, border, name: `Crop ${seedType}` };
+  randomColorCache.set(seedType, color);
+  
+  return color;
+}
+
+// Get crop color (predefined or random)
+export function getCropColor(seedType) {
+  return CROP_COLORS[seedType] || getRandomCropColor(seedType);
+}
+
+// Get crop name
+export function getCropName(seedType) {
+  return getCropColor(seedType).name;
 }
