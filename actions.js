@@ -94,7 +94,7 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     return;
   }
 
-  // Record automation check
+  // Record automation check (this happens on every check)
   recordAutomationCheck();
 
   let totalProcessed = 0;
@@ -102,6 +102,7 @@ export async function automateAllSelections(savedSelections, statusCallback) {
   let totalPlanted = 0;
   let totalWatered = 0;
   let hasError = false;
+  let hasPerformedActions = false;
 
   try {
     // STAGE 1: Harvest all fully grown crops
@@ -109,6 +110,7 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     const fullyGrownCrops = findFullyGrownCropsInSelections(savedSelections);
     
     if (fullyGrownCrops.length > 0) {
+      hasPerformedActions = true;
       if (statusCallback) statusCallback(`Stage 1/3: Harvesting ${fullyGrownCrops.length} crops...`);
       
       // Select harvesting tool once
@@ -152,6 +154,7 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     const emptyTiles = findEmptyTilesInSelections(savedSelections);
     
     if (emptyTiles.length > 0) {
+      hasPerformedActions = true;
       if (statusCallback) statusCallback(`Stage 2/3: Planting ${emptyTiles.length} tiles...`);
       
       // Group empty tiles by seed type for efficient planting
@@ -200,6 +203,7 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     const waterableTiles = findWaterableTilesInSelections(savedSelections);
     
     if (waterableTiles.length > 0) {
+      hasPerformedActions = true;
       if (statusCallback) statusCallback(`Stage 3/3: Watering ${waterableTiles.length} tiles...`);
       
       // Select watering can once
@@ -229,7 +233,11 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     }
 
     if (statusCallback) {
-      statusCallback(`Automation complete! Processed ${totalProcessed} actions total (${totalHarvested} harvested, ${totalPlanted} planted, ${totalWatered} watered)`);
+      if (hasPerformedActions) {
+        statusCallback(`Automation complete! Processed ${totalProcessed} actions total (${totalHarvested} harvested, ${totalPlanted} planted, ${totalWatered} watered)`);
+      } else {
+        statusCallback('Check complete - no actions needed');
+      }
     }
 
   } catch (error) {
@@ -237,7 +245,9 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     hasError = true;
     if (statusCallback) statusCallback(`Automation error: ${error.message}`);
   } finally {
-    // Record automation run statistics
-    recordAutomationRun(totalHarvested, totalPlanted, totalWatered, hasError);
+    // Only record automation run if actions were actually performed
+    if (hasPerformedActions) {
+      recordAutomationRun(totalHarvested, totalPlanted, totalWatered, hasError);
+    }
   }
 }
