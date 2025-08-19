@@ -20,6 +20,8 @@
 .ma-menu-content {
   margin: 8px;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .ma-menu-title {
@@ -47,6 +49,10 @@
   margin-top: 10px;
   border-top: 1px solid #e0e0e0;
   padding-top: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent the controls from overflowing */
 }
 
 /* Auto harvest toggle styles */
@@ -150,6 +156,8 @@
   padding: 8px;
   background-color: #f8f9fa;
   border-radius: 4px;
+  max-height: 120px; /* Limit height to prevent overflow */
+  overflow-y: auto; /* Make scrollable */
 }
 
 .seed-buttons {
@@ -174,11 +182,12 @@
 /* Styles for multiple selections feature */
 .saved-selections {
   margin-top: 15px;
-  max-height: 200px;
-  overflow-y: auto;
   background-color: #f8f9fa;
   border-radius: 4px;
   padding: 8px;
+  flex: 1; /* Take up remaining space */
+  overflow-y: auto; /* Make scrollable */
+  min-height: 100px; /* Minimum height to ensure usability */
 }
 
 .selection-item {
@@ -251,6 +260,7 @@
 .plant-all-button {
   background-color: #2ecc71;
   margin-top: 10px;
+  flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 /* Selection overlay styles */

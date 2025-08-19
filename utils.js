@@ -1,5 +1,5 @@
 import { GARDEN_WIDTH } from './config.js';
-import { CROP_COLORS, NON_CROP_TYPES } from './config.js';
+import { CROP_PROPERTIES, NON_CROP_TYPES } from './config.js';
 
 // Vector type for tile coordinates
 export class Vector {
@@ -68,7 +68,7 @@ export function getRandomCropColor(seedType) {
 
 // Get crop color (predefined or random)
 export function getCropColor(seedType) {
-  return CROP_COLORS[seedType] || getRandomCropColor(seedType);
+  return CROP_PROPERTIES[seedType] || getRandomCropColor(seedType);
 }
 
 // Get crop name
