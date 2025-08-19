@@ -196,3 +196,69 @@ export function findWaterableTilesInSelections(savedSelections) {
   
   return waterableTiles;
 }
+
+// Check if a tile is currently loading (has loading.gif)
+export function isTileLoading(tileElement) {
+  if (!tileElement) return false;
+  
+  const cursor = tileElement.querySelector('.cursor');
+  if (!cursor || !cursor.src) return false;
+  
+  return cursor.src.includes('loading.gif');
+}
+
+// Wait for a tile to finish loading, with timeout
+export function waitForTileToLoad(tileElement, timeoutMs = 3000) {
+  return new Promise((resolve) => {
+    if (!tileElement || !isTileLoading(tileElement)) {
+      resolve(false); // Not loading or invalid tile
+      return;
+    }
+    
+    const startTime = Date.now();
+    const checkInterval = setInterval(() => {
+      // Check if loading is complete
+      if (!isTileLoading(tileElement)) {
+        clearInterval(checkInterval);
+        resolve(true); // Successfully completed
+        return;
+      }
+      
+      // Check for timeout
+      if (Date.now() - startTime > timeoutMs) {
+        clearInterval(checkInterval);
+        console.warn('Tile loading timeout reached');
+        resolve(false); // Timeout reached
+        return;
+      }
+    }, 100); // Check every 100ms
+  });
+}
+
+// Check if any tiles in a range are currently loading
+export function areAnyTilesLoading(startVector, endVector) {
+  for (let y = startVector.y; y <= endVector.y; y++) {
+    for (let x = startVector.x; x <= endVector.x; x++) {
+      const tileElement = getTileElement(new Vector(x, y));
+      if (tileElement && isTileLoading(tileElement)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Wait for all tiles in a range to finish loading
+export async function waitForRangeToLoad(startVector, endVector, timeoutMs = 5000) {
+  const startTime = Date.now();
+  
+  while (areAnyTilesLoading(startVector, endVector)) {
+    if (Date.now() - startTime > timeoutMs) {
+      console.warn('Range loading timeout reached');
+      return false;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  return true;
+}
