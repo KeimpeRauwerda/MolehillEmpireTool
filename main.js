@@ -9,8 +9,16 @@ if (document.readyState === 'complete') {
 }
 
 function initialize() {
+  // Initialize statistics system
+  initializeStatistics();
+  
   createAutomationMenu();
   initPlantSelection();
+  
+  // Add statistics button to menu after a short delay to ensure menu is created
+  setTimeout(() => {
+    addStatisticsButtonToMenu();
+  }, 100);
   
   // Connect plant all button if it exists
   const plantAllButton = document.getElementById('plant-all-selections');

@@ -1,0 +1,108 @@
+<div id="statistics-panel">
+  <div class="stats-panel-content">
+    <div class="stats-panel-header">
+      <h3 class="stats-panel-title">Automation Statistics</h3>
+      <button id="close-stats-panel" class="stats-close-btn">x</button>
+    </div>
+    
+    <div class="stats-panel-body">
+      <!-- Session Stats -->
+      <div class="stats-section">
+        <h4 class="stats-section-title">Current Session</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">Uptime:</span>
+            <span id="session-uptime" class="stat-value">0s</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Checks:</span>
+            <span id="session-checks" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Harvested:</span>
+            <span id="session-harvested" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Planted:</span>
+            <span id="session-planted" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Watered:</span>
+            <span id="session-watered" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Automation Runs:</span>
+            <span id="session-runs" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Errors:</span>
+            <span id="session-errors" class="stat-value">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lifetime Stats -->
+      <div class="stats-section">
+        <h4 class="stats-section-title">Lifetime Stats</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">Total Sessions:</span>
+            <span id="lifetime-total-sessions" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Longest Session:</span>
+            <span id="lifetime-longest-session" class="stat-value">0s</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Checks:</span>
+            <span id="lifetime-checks" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Harvested:</span>
+            <span id="lifetime-harvested" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Planted:</span>
+            <span id="lifetime-planted" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Watered:</span>
+            <span id="lifetime-watered" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Automation Runs:</span>
+            <span id="lifetime-runs" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Errors:</span>
+            <span id="lifetime-errors" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Avg Actions/Run:</span>
+            <span id="lifetime-avg-actions" class="stat-value">0</span>
+          </div>
+          <div class="stat-item span-2">
+            <span class="stat-label">Last Automation:</span>
+            <span id="lifetime-last-automation" class="stat-value">Never</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Crops -->
+      <div class="stats-section">
+        <h4 class="stats-section-title">Top Crops</h4>
+        <div id="top-crops-list" class="top-crops-container">
+          <div class="no-data">No crop data yet</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="stats-actions">
+        <button id="refresh-stats" class="stats-action-btn">Refresh</button>
+        <button id="export-stats" class="stats-action-btn">Export</button>
+        <button id="import-stats" class="stats-action-btn">Import</button>
+        <button id="reset-stats" class="stats-action-btn danger">Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>

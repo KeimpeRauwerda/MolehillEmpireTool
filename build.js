@@ -5,8 +5,10 @@ const path = require('path');
 const files = [
   'config.js',
   'utils.js',
+  'statistics.js',
   'actions.js',
   'selection.js',
+  'statisticsPanel.js',
   'menu.js',
   'main.js'
 ];
@@ -21,6 +23,10 @@ const htmlTemplates = {
   'menu.js': {
     placeholder: '<!-- MENU_HTML_TEMPLATE_PLACEHOLDER -->',
     file: 'menu.html'
+  },
+  'statisticsPanel.js': {
+    placeholder: '<!-- STATS_PANEL_HTML_TEMPLATE_PLACEHOLDER -->',
+    file: 'statisticsPanel.html'
   }
 };
 

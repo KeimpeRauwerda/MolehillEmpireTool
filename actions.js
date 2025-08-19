@@ -94,7 +94,14 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     return;
   }
 
+  // Record automation check
+  recordAutomationCheck();
+
   let totalProcessed = 0;
+  let totalHarvested = 0;
+  let totalPlanted = 0;
+  let totalWatered = 0;
+  let hasError = false;
 
   try {
     // STAGE 1: Harvest all fully grown crops
@@ -111,15 +118,28 @@ export async function automateAllSelections(savedSelections, statusCallback) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
+      // Group crops by type for statistics
+      const cropsByType = new Map();
+      
       // Harvest all fully grown crops
       for (const crop of fullyGrownCrops) {
         const tileElement = getTileElement(crop.position);
         if (tileElement) {
           tileElement.click();
           await new Promise(resolve => setTimeout(resolve, 50));
+          
+          // Track crop type for statistics
+          const cropType = crop.selection.seedType;
+          cropsByType.set(cropType, (cropsByType.get(cropType) || 0) + 1);
         }
       }
       
+      // Record harvest statistics
+      for (const [cropType, count] of cropsByType.entries()) {
+        recordAutomationHarvest(cropType, count);
+      }
+      
+      totalHarvested = fullyGrownCrops.length;
       totalProcessed += fullyGrownCrops.length;
       if (statusCallback) statusCallback(`Stage 1/3: Harvested ${fullyGrownCrops.length} crops`);
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -162,8 +182,12 @@ export async function automateAllSelections(savedSelections, statusCallback) {
             await new Promise(resolve => setTimeout(resolve, 50));
           }
         }
+        
+        // Record plant statistics
+        recordAutomationPlant(seedType, positions.length);
       }
       
+      totalPlanted = emptyTiles.length;
       totalProcessed += emptyTiles.length;
       if (statusCallback) statusCallback(`Stage 2/3: Planted ${emptyTiles.length} tiles`);
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -194,6 +218,10 @@ export async function automateAllSelections(savedSelections, statusCallback) {
         }
       }
       
+      // Record water statistics
+      recordAutomationWater(waterableTiles.length);
+      
+      totalWatered = waterableTiles.length;
       totalProcessed += waterableTiles.length;
       if (statusCallback) statusCallback(`Stage 3/3: Watered ${waterableTiles.length} tiles`);
     } else {
@@ -201,11 +229,15 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     }
 
     if (statusCallback) {
-      statusCallback(`Automation complete! Processed ${totalProcessed} actions total (${fullyGrownCrops.length} harvested, ${emptyTiles.length} planted, ${waterableTiles.length} watered)`);
+      statusCallback(`Automation complete! Processed ${totalProcessed} actions total (${totalHarvested} harvested, ${totalPlanted} planted, ${totalWatered} watered)`);
     }
 
   } catch (error) {
     console.error('Automation error:', error);
+    hasError = true;
     if (statusCallback) statusCallback(`Automation error: ${error.message}`);
+  } finally {
+    // Record automation run statistics
+    recordAutomationRun(totalHarvested, totalPlanted, totalWatered, hasError);
   }
 }
