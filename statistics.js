@@ -226,6 +226,7 @@ let statsManager = null;
 function initializeStatistics() {
   if (!statsManager) {
     statsManager = new AutomationStatistics();
+    statsManager.startNewSession();
   }
   return statsManager;
 }
