@@ -480,6 +480,7 @@ function updateHighlight() {
 // Auto harvest state
 let autoHarvestEnabled = false;
 let autoHarvestInterval = null;
+let automationInProgress = false;
 
 // Setup automatic harvesting toggle
 function setupAutoHarvestToggle() {
@@ -512,6 +513,7 @@ function startAutoHarvest() {
   if (autoHarvestInterval) return; // Already running
   
   autoHarvestEnabled = true;
+  automationInProgress = false; // Reset state
   const autoHarvestStatus = document.getElementById('auto-harvest-status');
   
   if (autoHarvestStatus) {
@@ -528,6 +530,7 @@ function startAutoHarvest() {
 // Stop automatic harvesting
 function stopAutoHarvest() {
   autoHarvestEnabled = false;
+  automationInProgress = false; // Reset state
   
   if (autoHarvestInterval) {
     clearInterval(autoHarvestInterval);
@@ -542,8 +545,15 @@ function stopAutoHarvest() {
 
 // Check for fully grown crops and harvest/replant them
 async function checkAndHarvestCrops() {
+  // Skip if automation is already in progress
+  if (automationInProgress) {
+    console.log('Automation cycle already in progress, skipping...');
+    return;
+  }
+  
   if (!autoHarvestEnabled || savedSelections.length === 0) return;
   
+  automationInProgress = true;
   const autoHarvestStatus = document.getElementById('auto-harvest-status');
   
   try {
@@ -562,6 +572,14 @@ async function checkAndHarvestCrops() {
     console.error('Auto harvest error:', error);
     if (autoHarvestStatus) {
       autoHarvestStatus.textContent = `Auto harvest error - ${error.message}`;
+    }
+  } finally {
+    automationInProgress = false;
+    
+    // Reset the interval to ensure proper timing for next check
+    if (autoHarvestEnabled && autoHarvestInterval) {
+      clearInterval(autoHarvestInterval);
+      autoHarvestInterval = setInterval(checkAndHarvestCrops, AUTO_HARVEST_CHECK_INTERVAL);
     }
   }
 }
