@@ -1,5 +1,5 @@
 import { GARDEN_WIDTH } from './config.js';
-import { CROP_COLORS } from './config.js';
+import { CROP_COLORS, NON_CROP_TYPES } from './config.js';
 
 // Vector type for tile coordinates
 export class Vector {
@@ -76,7 +76,25 @@ export function getCropName(seedType) {
   return getCropColor(seedType).name;
 }
 
-// Check if a tile has a fully grown crop (growth stage 4)
+// Check if a tile contains an actual crop (not weeds, stones, etc.)
+export function isCrop(tileElement) {
+  const plantImage = tileElement.querySelector('.plantImage');
+  if (!plantImage) return false;
+  
+  const backgroundStyle = plantImage.style.background;
+  if (!backgroundStyle) return false;
+  
+  // Extract the image filename from the background URL
+  const urlMatch = backgroundStyle.match(/url\([^)]*\/([^/)]+)\)/);
+  if (!urlMatch) return false;
+  
+  const filename = urlMatch[1];
+  
+  // Check if the filename contains any non-crop type
+  return !NON_CROP_TYPES.some(nonCropType => filename.includes(nonCropType));
+}
+
+// Check if a tile has a fully grown crop (growth stage 4) and is actually a crop
 export function isFullyGrown(tileElement) {
   const plantImage = tileElement.querySelector('.plantImage');
   if (!plantImage) return false;
@@ -90,8 +108,8 @@ export function isFullyGrown(tileElement) {
   
   const filename = urlMatch[1];
   
-  // Check if the filename indicates growth stage 4 (ends with _04.gif)
-  return filename.includes('_04.gif');
+  // Check if it's an actual crop and at growth stage 4
+  return isCrop(tileElement) && filename.includes('_04.gif');
 }
 
 // Find all fully grown crops within saved selections
@@ -156,4 +174,25 @@ export function findEmptyTilesInSelections(savedSelections) {
   }
   
   return emptyTiles;
+}
+
+// Find all tiles that can be watered within saved selections
+export function findWaterableTilesInSelections(savedSelections) {
+  const waterableTiles = [];
+  
+  for (const selection of savedSelections) {
+    for (let y = selection.point1.y; y <= selection.point2.y; y++) {
+      for (let x = selection.point1.x; x <= selection.point2.x; x++) {
+        const tileElement = getTileElement(new Vector(x, y));
+        if (tileElement && canWater(tileElement)) {
+          waterableTiles.push({
+            position: new Vector(x, y),
+            selection: selection
+          });
+        }
+      }
+    }
+  }
+  
+  return waterableTiles;
 }

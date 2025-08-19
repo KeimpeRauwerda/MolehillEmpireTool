@@ -547,86 +547,15 @@ async function checkAndHarvestCrops() {
   const autoHarvestStatus = document.getElementById('auto-harvest-status');
   
   try {
-    // Find all fully grown crops in saved selections
-    const fullyGrownCrops = findFullyGrownCropsInSelections(savedSelections);
-    
-    if (fullyGrownCrops.length === 0) {
+    // Use the new 3-stage automation function
+    await automateAllSelections(savedSelections, (status) => {
       if (autoHarvestStatus) {
-        autoHarvestStatus.textContent = `Auto harvest active - no crops ready (checked ${new Date().toLocaleTimeString()})`;
+        autoHarvestStatus.textContent = `Auto harvest: ${status}`;
       }
-      return;
-    }
+    });
     
     if (autoHarvestStatus) {
-      autoHarvestStatus.textContent = `Harvesting ${fullyGrownCrops.length} crops...`;
-    }
-    
-    // Group crops by selection for efficient harvesting
-    const selectionGroups = new Map();
-    
-    for (const crop of fullyGrownCrops) {
-      const selectionKey = `${crop.selection.point1.x},${crop.selection.point1.y}-${crop.selection.point2.x},${crop.selection.point2.y}-${crop.selection.seedType}`;
-      
-      if (!selectionGroups.has(selectionKey)) {
-        selectionGroups.set(selectionKey, {
-          selection: crop.selection,
-          positions: []
-        });
-      }
-      
-      selectionGroups.get(selectionKey).positions.push(crop.position);
-    }
-    
-    // Process each selection group
-    for (const group of selectionGroups.values()) {
-      // Harvest individual tiles (since we only want fully grown ones)
-      for (const position of group.positions) {
-        // Select harvesting tool
-        document.querySelector('#ernten').click();
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Harvest the tile
-        const tileElement = getTileElement(position);
-        if (tileElement) {
-          tileElement.click();
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      }
-      
-      // Wait a bit after harvesting
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Replant the harvested tiles
-      for (const position of group.positions) {
-        const tileElement = getTileElement(position);
-        if (tileElement && isTileEmpty(tileElement)) {
-          // Select seed type
-          document.querySelector(`#regal_${group.selection.seedType}`).click();
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Plant the seed
-          tileElement.click();
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Wait a bit, then water
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Select watering can
-          document.querySelector('#giessen').click();
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Water the tile
-          tileElement.click();
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      }
-      
-      // Small delay between selection groups
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    
-    if (autoHarvestStatus) {
-      autoHarvestStatus.textContent = `Auto harvest complete - ${fullyGrownCrops.length} crops replanted (${new Date().toLocaleTimeString()})`;
+      autoHarvestStatus.textContent = `Auto harvest complete (${new Date().toLocaleTimeString()})`;
     }
     
   } catch (error) {
