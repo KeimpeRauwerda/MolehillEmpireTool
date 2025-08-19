@@ -9,6 +9,7 @@ let secondPoint = null;
 let highlightElement = null;
 let mouseHoverPoint = null;
 let savedSelections = [];
+let selectionOverlays = new Map(); // Track overlay elements for each selection
 
 // Initialize the selection system
 export function initPlantSelection() {
@@ -161,6 +162,97 @@ function loadSavedSelections() {
   }
 }
 
+// Create overlay element for a selection
+function createSelectionOverlay(selection, index) {
+  const overlay = document.createElement('div');
+  overlay.className = 'selection-overlay';
+  overlay.setAttribute('data-selection-index', index);
+  
+  const cropColor = getCropColor(selection.seedType);
+  overlay.style.backgroundColor = cropColor.bg;
+  overlay.style.borderColor = cropColor.border;
+  overlay.style.display = 'none';
+  overlay.style.pointerEvents = 'none';
+  overlay.style.zIndex = '8500'; // Between tiles and highlights
+  
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+// Position overlay element based on selection coordinates
+function positionSelectionOverlay(overlay, selection) {
+  const firstTileElement = getTileElement(selection.point1);
+  const secondTileElement = getTileElement(selection.point2);
+  
+  if (!firstTileElement || !secondTileElement) return false;
+  
+  const firstRect = firstTileElement.getBoundingClientRect();
+  const secondRect = secondTileElement.getBoundingClientRect();
+  
+  const left = Math.min(firstRect.left, secondRect.left);
+  const top = Math.min(firstRect.top, secondRect.top);
+  const right = Math.max(firstRect.right, secondRect.right);
+  const bottom = Math.max(firstRect.bottom, secondRect.bottom);
+  
+  overlay.style.position = 'fixed';
+  overlay.style.left = `${left}px`;
+  overlay.style.top = `${top}px`;
+  overlay.style.width = `${right - left}px`;
+  overlay.style.height = `${bottom - top}px`;
+  
+  return true;
+}
+
+// Show all selection overlays
+function showAllSelectionOverlays() {
+  savedSelections.forEach((selection, index) => {
+    let overlay = selectionOverlays.get(index);
+    
+    if (!overlay) {
+      overlay = createSelectionOverlay(selection, index);
+      selectionOverlays.set(index, overlay);
+    }
+    
+    if (positionSelectionOverlay(overlay, selection)) {
+      overlay.style.display = 'block';
+    }
+  });
+}
+
+// Hide all selection overlays
+function hideAllSelectionOverlays() {
+  selectionOverlays.forEach(overlay => {
+    overlay.style.display = 'none';
+  });
+}
+
+// Clean up removed overlays
+function cleanupRemovedOverlays() {
+  const indicesToRemove = [];
+  
+  selectionOverlays.forEach((overlay, index) => {
+    if (index >= savedSelections.length) {
+      overlay.remove();
+      indicesToRemove.push(index);
+    }
+  });
+  
+  indicesToRemove.forEach(index => {
+    selectionOverlays.delete(index);
+  });
+}
+
+// Update overlay visibility based on auto-harvest state
+function updateOverlayVisibility() {
+  const autoHarvestCheckbox = document.getElementById('auto-harvest-enabled');
+  
+  if (autoHarvestCheckbox && autoHarvestCheckbox.checked) {
+    showAllSelectionOverlays();
+  } else {
+    hideAllSelectionOverlays();
+  }
+}
+
 // Render the saved selections in the UI
 function renderSavedSelections() {
   const container = document.getElementById('saved-selections');
@@ -205,14 +297,14 @@ function renderSavedSelections() {
     item.addEventListener('mouseenter', () => {
       // Don't show preview if we're in the middle of making a selection
       if (!selectionMode || (!firstPoint && !secondPoint)) {
-        showSelectionHighlight(selection);
+        highlightSelectionOverlay(index);
       }
     });
     
     item.addEventListener('mouseleave', () => {
       // Don't hide if we're in active selection mode with points selected
       if (!selectionMode || (!firstPoint && !secondPoint)) {
-        hideSelectionHighlight();
+        unhighlightSelectionOverlay(index);
       }
     });
     
@@ -243,9 +335,20 @@ function renderSavedSelections() {
     // Add delete button listener
     const deleteBtn = item.querySelector('.selection-delete');
     deleteBtn.addEventListener('click', () => {
+      // Remove overlay before removing selection
+      const overlay = selectionOverlays.get(index);
+      if (overlay) {
+        overlay.remove();
+        selectionOverlays.delete(index);
+      }
+      
       savedSelections.splice(index, 1);
       saveSavedSelections();
       renderSavedSelections();
+      
+      // Clean up and recreate overlays with correct indices
+      cleanupRemovedOverlays();
+      updateOverlayVisibility();
     });
   });
   
@@ -253,6 +356,36 @@ function renderSavedSelections() {
   const plantAllBtn = document.getElementById('plant-all-selections');
   if (plantAllBtn) {
     plantAllBtn.style.display = savedSelections.length > 0 ? 'block' : 'none';
+  }
+  
+  // Update overlay visibility after rendering
+  setTimeout(updateOverlayVisibility, 100);
+}
+
+// Highlight a specific selection overlay
+function highlightSelectionOverlay(index) {
+  const overlay = selectionOverlays.get(index);
+  if (overlay && overlay.style.display !== 'none') {
+    overlay.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.8)';
+    overlay.style.zIndex = '8600';
+  } else {
+    // If overlay not visible, use the old highlight method
+    const selection = savedSelections[index];
+    if (selection) {
+      showSelectionHighlight(selection);
+    }
+  }
+}
+
+// Remove highlight from selection overlay
+function unhighlightSelectionOverlay(index) {
+  const overlay = selectionOverlays.get(index);
+  if (overlay) {
+    overlay.style.boxShadow = 'none';
+    overlay.style.zIndex = '8500';
+  } else {
+    // If using old highlight method, hide it
+    hideSelectionHighlight();
   }
 }
 
@@ -525,6 +658,9 @@ function startAutoHarvest() {
   
   // Set up periodic checks
   autoHarvestInterval = setInterval(checkAndHarvestCrops, AUTO_HARVEST_CHECK_INTERVAL);
+  
+  // Show overlays when auto harvest starts
+  setTimeout(showAllSelectionOverlays, 100);
 }
 
 // Stop automatic harvesting
@@ -541,6 +677,9 @@ function stopAutoHarvest() {
   if (autoHarvestStatus) {
     autoHarvestStatus.textContent = 'Auto harvest disabled';
   }
+  
+  // Hide overlays when auto harvest stops
+  hideAllSelectionOverlays();
 }
 
 // Check for fully grown crops and harvest/replant them

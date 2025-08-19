@@ -252,3 +252,23 @@
   background-color: #2ecc71;
   margin-top: 10px;
 }
+
+/* Selection overlay styles */
+.selection-overlay {
+  position: fixed;
+  border: 2px solid;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  opacity: 0.7;
+  /* Offset position by border width to prevent overlap */
+  transform: translate(1px, 1px);
+  /* Reduce size by border width to maintain proper boundaries */
+  box-sizing: border-box;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+}
+
+.selection-overlay:hover {
+  opacity: 0.9;
+}
