@@ -351,9 +351,11 @@ function handleGardenMouseMove(event) {
   const coords = tileNumberToCoords(tileNum);
   const vector = new Vector(coords.x, coords.y);
   
-  // Update hover point and preview
-  mouseHoverPoint = vector;
-  updatePreviewHighlight();
+  // Update hover point and preview - only if it's different
+  if (!mouseHoverPoint || !mouseHoverPoint.equals(vector)) {
+    mouseHoverPoint = vector;
+    updatePreviewHighlight();
+  }
 }
 
 // Handle clicks on the garden

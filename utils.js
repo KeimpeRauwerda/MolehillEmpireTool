@@ -126,6 +126,17 @@ export function isTileEmpty(tileElement) {
   return backgroundStyle.includes('/0.gif') || backgroundStyle.includes('produkte/0.gif');
 }
 
+// Check if a tile can accept water (not stage 4 growth)
+export function canWater(tileElement) {
+  const plantImage = tileElement.querySelector('.plantImage');
+  if (!plantImage || !plantImage.style.background) return false;
+  
+  const backgroundStyle = plantImage.style.background;
+  
+  // Check if the background does not contain stage 4 growth image
+  return !backgroundStyle.includes('_04.gif') && !backgroundStyle.includes('produkte/04.gif');
+}
+
 // Find all empty tiles within saved selections
 export function findEmptyTilesInSelections(savedSelections) {
   const emptyTiles = [];

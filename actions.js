@@ -12,7 +12,11 @@ export async function plantRange(startVector, endVector, seedType = SEED_TYPES[0
   // Plant each tile in the range
   for (let y = startVector.y; y <= endVector.y; y++) {
     for (let x = startVector.x; x <= endVector.x; x++) {
-      getTileElement({ x, y }).click();
+      const tileElement = getTileElement({ x, y });
+      if (!tileElement || !isTileEmpty(tileElement)) {
+        continue; // Skip if tile is not empty
+      }
+      tileElement.click();
       await new Promise(resolve => requestAnimationFrame(resolve));
     }
   }
@@ -29,7 +33,11 @@ export async function waterRange(startVector, endVector) {
   // Water each tile in the range
   for (let y = startVector.y; y <= endVector.y; y++) {
     for (let x = startVector.x; x <= endVector.x; x++) {
-      getTileElement({ x, y }).click();
+      const tileElement = getTileElement({ x, y });
+      if (!tileElement || !canWater(tileElement)) {
+        continue; // Skip if tile cannot be watered
+      }
+      tileElement.click();
       await new Promise(resolve => requestAnimationFrame(resolve));
     }
   }
