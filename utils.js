@@ -144,15 +144,34 @@ export function isTileEmpty(tileElement) {
   return backgroundStyle.includes('/0.gif') || backgroundStyle.includes('produkte/0.gif');
 }
 
-// Check if a tile can accept water (not stage 4 growth)
+// Check if a tile is already watered (has water droplet image)
+export function isTileWatered(tileElement) {
+  if (!tileElement) return false;
+  
+  const waterElement = tileElement.querySelector('.wasser');
+  if (!waterElement || !waterElement.src) return false;
+  
+  // Check if the water element shows the watered state (not the empty 0.gif)
+  return !waterElement.src.includes('/0.gif') && waterElement.src.includes('gegossen.gif');
+}
+
+// Check if a tile can accept water (has a crop and is not already watered and not stage 4 growth)
 export function canWater(tileElement) {
   const plantImage = tileElement.querySelector('.plantImage');
   if (!plantImage || !plantImage.style.background) return false;
   
   const backgroundStyle = plantImage.style.background;
   
-  // Check if the background does not contain stage 4 growth image
-  return !backgroundStyle.includes('_04.gif') && !backgroundStyle.includes('produkte/04.gif');
+  // Check if it's an empty tile
+  if (backgroundStyle.includes('/0.gif') || backgroundStyle.includes('produkte/0.gif')) return false;
+  
+  // Check if it's already at stage 4 growth (fully grown crops don't need water)
+  if (backgroundStyle.includes('_04.gif') || backgroundStyle.includes('produkte/04.gif')) return false;
+  
+  // Check if it's already watered
+  if (isTileWatered(tileElement)) return false;
+  
+  return true;
 }
 
 // Find all empty tiles within saved selections

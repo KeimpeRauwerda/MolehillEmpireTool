@@ -1,6 +1,6 @@
 import { Vector, getTileElement, getCropColor, getCropName } from './utils.js';
-import { plantAndWaterRange, harvestRange } from './actions.js';
-import { SEED_TYPES } from './config.js';
+import { plantAndWaterRange, harvestRange, automateAllSelections } from './actions.js';
+import { SEED_TYPES, AUTO_HARVEST_CHECK_INTERVAL } from './config.js';
 
 // Selection state
 let selectionMode = false;

@@ -94,36 +94,46 @@ export async function automateAllSelections(savedSelections, statusCallback) {
     return;
   }
 
+  let totalProcessed = 0;
+
   try {
     // STAGE 1: Harvest all fully grown crops
-    if (statusCallback) statusCallback('Stage 1/3: Harvesting all fully grown crops...');
+    if (statusCallback) statusCallback('Stage 1/3: Checking for fully grown crops...');
     const fullyGrownCrops = findFullyGrownCropsInSelections(savedSelections);
     
     if (fullyGrownCrops.length > 0) {
+      if (statusCallback) statusCallback(`Stage 1/3: Harvesting ${fullyGrownCrops.length} crops...`);
+      
       // Select harvesting tool once
-      document.querySelector('#ernten').click();
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const harvestTool = document.querySelector('#ernten');
+      if (harvestTool) {
+        harvestTool.click();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       // Harvest all fully grown crops
       for (const crop of fullyGrownCrops) {
         const tileElement = getTileElement(crop.position);
         if (tileElement) {
           tileElement.click();
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
       }
       
+      totalProcessed += fullyGrownCrops.length;
       if (statusCallback) statusCallback(`Stage 1/3: Harvested ${fullyGrownCrops.length} crops`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
     } else {
       if (statusCallback) statusCallback('Stage 1/3: No crops ready for harvest');
     }
 
     // STAGE 2: Plant all empty tiles with their designated crops
-    if (statusCallback) statusCallback('Stage 2/3: Planting all empty tiles...');
+    if (statusCallback) statusCallback('Stage 2/3: Checking for empty tiles...');
     const emptyTiles = findEmptyTilesInSelections(savedSelections);
     
     if (emptyTiles.length > 0) {
+      if (statusCallback) statusCallback(`Stage 2/3: Planting ${emptyTiles.length} tiles...`);
+      
       // Group empty tiles by seed type for efficient planting
       const tilesBySeedType = new Map();
       
@@ -138,8 +148,11 @@ export async function automateAllSelections(savedSelections, statusCallback) {
       // Plant each seed type
       for (const [seedType, positions] of tilesBySeedType.entries()) {
         // Select seed type once
-        document.querySelector(`#regal_${seedType}`).click();
-        await new Promise(resolve => setTimeout(resolve, 100));
+        const seedElement = document.querySelector(`#regal_${seedType}`);
+        if (seedElement) {
+          seedElement.click();
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
         
         // Plant all tiles of this seed type
         for (const position of positions) {
@@ -151,36 +164,45 @@ export async function automateAllSelections(savedSelections, statusCallback) {
         }
       }
       
+      totalProcessed += emptyTiles.length;
       if (statusCallback) statusCallback(`Stage 2/3: Planted ${emptyTiles.length} tiles`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
     } else {
       if (statusCallback) statusCallback('Stage 2/3: No empty tiles to plant');
     }
 
-    // STAGE 3: Water all tiles that need watering
-    if (statusCallback) statusCallback('Stage 3/3: Watering all crops...');
+    // STAGE 3: Water all tiles that need watering (always check regardless of previous stages)
+    if (statusCallback) statusCallback('Stage 3/3: Checking all tiles for watering...');
     const waterableTiles = findWaterableTilesInSelections(savedSelections);
     
     if (waterableTiles.length > 0) {
+      if (statusCallback) statusCallback(`Stage 3/3: Watering ${waterableTiles.length} tiles...`);
+      
       // Select watering can once
-      document.querySelector('#giessen').click();
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const waterTool = document.querySelector('#giessen');
+      if (waterTool) {
+        waterTool.click();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       // Water all tiles that need it
       for (const tile of waterableTiles) {
         const tileElement = getTileElement(tile.position);
-        if (tileElement) {
+        if (tileElement && canWater(tileElement)) { // Double-check before watering
           tileElement.click();
           await new Promise(resolve => setTimeout(resolve, 50));
         }
       }
       
+      totalProcessed += waterableTiles.length;
       if (statusCallback) statusCallback(`Stage 3/3: Watered ${waterableTiles.length} tiles`);
     } else {
       if (statusCallback) statusCallback('Stage 3/3: No tiles need watering');
     }
 
-    if (statusCallback) statusCallback(`Automation complete! Processed ${fullyGrownCrops.length + emptyTiles.length + waterableTiles.length} tiles total`);
+    if (statusCallback) {
+      statusCallback(`Automation complete! Processed ${totalProcessed} actions total (${fullyGrownCrops.length} harvested, ${emptyTiles.length} planted, ${waterableTiles.length} watered)`);
+    }
 
   } catch (error) {
     console.error('Automation error:', error);
